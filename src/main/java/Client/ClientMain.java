@@ -174,6 +174,7 @@ public class ClientMain extends Application {
 
             if(completedweight > 0){
                 markedgrade = new Rectangle(barWidth,(graphHeight / 100) * Math.round(completedweight));
+
                 markedgrade.setY(graphHeight - markedgrade.getHeight());// - markedgrade.getHeight());
                 markedgrade.setX(barWidth);
                 markedgrade.setLayoutX(barx);
@@ -191,7 +192,8 @@ public class ClientMain extends Application {
                 ds1.setWidth(20);
                 ds1.setHeight(0);
                 markedgrade.setEffect(ds1);
-
+                markedgrade.setOnMouseEntered( x -> { setMouseHoverScale((Rectangle)x.getSource(),true);});
+                markedgrade.setOnMouseExited(x -> { setMouseHoverScale((Rectangle)x.getSource(),false);});
                 basegroup.getChildren().add(markedgrade);
             }
             Rectangle expectedgrade = null;
@@ -255,6 +257,14 @@ public class ClientMain extends Application {
             // TODO: calculate projected grade
 
         }
+        void setMouseHoverScale(Rectangle rect,boolean isOn){
+            if(isOn == true){
+                rect.setWidth(rect.getWidth() + 20);
+            }else {
+                rect.setWidth(rect.getWidth() - 20);
+            }
+        }
+
     }
 
 
