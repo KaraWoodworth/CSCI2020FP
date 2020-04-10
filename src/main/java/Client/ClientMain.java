@@ -1,6 +1,7 @@
 package Client;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -17,6 +18,11 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import javax.lang.model.element.Element;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,59 +33,157 @@ public class ClientMain extends Application {
         launch(args);
     }
 
+    public TextArea courseText;
+    public generateBarGraph ggraph;
+    public Group graphgroup;
+    public HBox mainBox;
     @Override
     public void start(Stage primaryStage) {
         Pane mpane = new Pane();
 
-
-        Group graphgroup = new Group();
+        courseText = new TextArea();
+        graphgroup = new Group();
         Rectangle rect = new Rectangle(500.0,600.0);
 
         //rect.setFill(Color.BISQUE);
-        graphgroup.getChildren().add(rect);
-        courseGrades[] testgrades = new courseGrades[5];
-        testgrades[0] = new courseGrades();
-        testgrades[0].gradeList.add(new gradeComponent("Linear Algebra","test 1",50d,10d,true));
-        testgrades[0].gradeList.add(new gradeComponent("Linear Algebra","test 2",30d,10d,true));
-        testgrades[0].gradeList.add(new gradeComponent("Linear Algebra","final",null,80d,false));
+        //graphgroup.getChildren().add(rect);
 
-        testgrades[1] = new courseGrades();
-        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","test 1",100d,10d,true));
-        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","test 2",66d,15d,true));
-        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","assignment 1",80d,25d,true));
-        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","assignment 2",80d,25d,true));
-        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","final",null,25d,false));
+        List<courseGrades> testgrades = new ArrayList<courseGrades>();
+        courseGrades course1 = new courseGrades();
+        course1.gradeList.add(new gradeComponent("Linear Algebra","test 1",50d,10d,true));
+        course1.gradeList.add(new gradeComponent("Linear Algebra","test 2",30d,10d,true));
+        course1.gradeList.add(new gradeComponent("Linear Algebra","final",null,80d,false));
+        courseGrades course2 = new courseGrades();
+        course2.gradeList.add(new gradeComponent("Calculus 2","test 1",100d,10d,true));
+        course2.gradeList.add(new gradeComponent("Calculus 2","test 2",66d,15d,true));
+        course2.gradeList.add(new gradeComponent("Calculus 2","Assignment 1",80d,25d,true));
+        course2.gradeList.add(new gradeComponent("Calculus 2","Assignment 2",null,25d,false));
+        course2.gradeList.add(new gradeComponent("Calculus 2","final",null,25d,false));
+        courseGrades course3 = new courseGrades();
+        course3.gradeList.add(new gradeComponent("Physics 2","midterm 1",60d,10d,true));
+        course3.gradeList.add(new gradeComponent("Physics 2","midterm 2",60d,15d,true));
+        course3.gradeList.add(new gradeComponent("Physics 2","tutorial",60d,25d,true));
+        course3.gradeList.add(new gradeComponent("Physics 2","labs",null,25d,false));
+        course3.gradeList.add(new gradeComponent("Physics 2","final",null,25d,false));
+        courseGrades course4 = new courseGrades();
+        course4.gradeList.add(new gradeComponent("CSCI 2040","midterm",null,25d,false));
+        course4.gradeList.add(new gradeComponent("CSCI 2040","final exam",null,50d,false));
+        course4.gradeList.add(new gradeComponent("CSCI 2040","tutorial grade",null,25d,false));
+        courseGrades course5 = new courseGrades();
+        course5.gradeList.add(new gradeComponent("CSCI 2020","midterm",60d,25d,true));
+        course5.gradeList.add(new gradeComponent("CSCI 2020","final exam",60d,50d,true));
+        course5.gradeList.add(new gradeComponent("CSCI 2020","Assignments",60d,25d,true));
 
-        testgrades[2] = new courseGrades();
-        testgrades[2].gradeList.add(new gradeComponent("Physics 2","midterm",60d,10d,true));
-        testgrades[2].gradeList.add(new gradeComponent("Physics 2","midterm 2",60d,15d,true));
-        testgrades[2].gradeList.add(new gradeComponent("Physics 2","tutorial grade",60d,25d,true));
-        testgrades[2].gradeList.add(new gradeComponent("Physics 2","labs",null,25d,false));
-        testgrades[2].gradeList.add(new gradeComponent("Physics 2","final",null,25d,false));
 
-        testgrades[3] = new courseGrades();
-        testgrades[3].gradeList.add(new gradeComponent("CSCI 2040","midterm",60d,25d,false));
-        testgrades[3].gradeList.add(new gradeComponent("CSCI 2040","midterm 2",60d,25d,false));
-        testgrades[3].gradeList.add(new gradeComponent("CSCI 2040","tutorial grade",60d,50d,false));
+        testgrades.add(course1);
+        testgrades.add(course2);
+        testgrades.add(course3);
+        testgrades.add(course4);
+        testgrades.add(course5);
 
-        testgrades[4] = new courseGrades();
-        testgrades[4].gradeList.add(new gradeComponent("CSCI 2020","midterm",60d,25d,true));
-        testgrades[4].gradeList.add(new gradeComponent("CSCI 2020","midterm 2",60d,25d,true));
-        testgrades[4].gradeList.add(new gradeComponent("CSCI 2020","tutorial grade",60d,50d,true));
-
-        TextArea courseText = new TextArea();
         generateBarGraph ggraph = new generateBarGraph(testgrades,500,courseText);
+
         graphgroup = ggraph.getBarGraph();
         graphgroup.setLayoutY(10);
         graphgroup.setLayoutX(10);
-        HBox mainBox = new HBox();
+        mainBox = new HBox();
         mainBox.getChildren().addAll(graphgroup,courseText);
 
         Scene mscene = new Scene(mainBox,800,600);
         primaryStage.setTitle("Client");
         primaryStage.setScene(mscene);
         primaryStage.show();
+        //getServerData(8000);
 
+    }
+
+    public void getServerData(int port){
+        new Thread( () -> {
+            try {
+                Socket socket = new Socket("localhost",port);
+
+                DataInputStream getdata = new DataInputStream(socket.getInputStream());
+
+                String rawdata = getdata.readUTF();
+
+                Platform.runLater(new updateUI(rawdata));
+
+            } catch(IOException e){
+                System.err.println(e);
+            }
+        }).start();
+    }
+    class updateUI implements Runnable{
+        private String rawData;
+        public updateUI(String rawdata){this.rawData = rawdata;}
+        public void run(){
+            try {
+                List<courseGrades> grades = getGraphList(this.rawData);
+                generateBarGraph ggraph = new generateBarGraph(grades, 500, courseText);
+
+                graphgroup = ggraph.getBarGraph();
+                //mainBox.getChildren().addAll(graphgroup, courseText);
+                courseText.setText("select a bar to view data");
+            }catch(Exception e){
+                System.out.println(e);
+
+            }
+        }
+
+    }
+    public List<courseGrades> getGraphList(String rawdata){
+        if(rawdata.length() > 0) {
+            String[] rawlines = rawdata.split("\n");
+            String currentclass = "";
+            List<courseGrades> allgrades = new ArrayList<courseGrades>();
+            courseGrades coursegrade = null;
+            // get individusal lines
+            //System.out.println("There is this many lines" );
+            for (String line : rawlines) {
+                // get current lines fields
+                String[] Fields = line.split(",");
+                // this ensures we are parsing the right amount of fields
+                if(Fields.length >= 5) {
+                    //check if we are reading same course
+                    if(!Fields[0].equals(currentclass)){
+
+                        if (coursegrade != null){
+                            allgrades.add(coursegrade);
+                        }
+                        coursegrade = new courseGrades();
+                        currentclass = Fields[0];
+                    }
+                    Boolean currentboolean = false;
+                    if(Fields[4].endsWith("true")){
+                        System.out.println(Fields[1] + " flagged true reads " + Fields[4]);
+                        currentboolean = true;
+                    }else {
+                        System.out.println(Fields[1] + " flagged false reads " + Fields[4]);
+                    }
+                    Double field2 = null;
+
+                    if(Fields[2].length() > 0) {
+
+                        field2 = Double.parseDouble(Fields[2]);
+                    }
+
+                    Double field3 = Double.parseDouble(Fields[3]);
+                    System.out.println("Final bool before adding is " + currentboolean.toString());
+
+                    coursegrade.gradeList.add(new gradeComponent(Fields[0],Fields[1],field2,field3,currentboolean));
+
+                }
+                else{
+                    System.out.println("Error in reading line" + line + "\n" +
+                            "too few fields");
+                }
+
+            }
+            allgrades.add(coursegrade);
+            System.out.println("Parsed grades: " + allgrades.size());
+            return allgrades;
+        }
+        return null;
     }
 
     // this is for creating all bars
@@ -89,13 +193,13 @@ public class ClientMain extends Application {
         public int graphWidth = 50; // should be containor size / bars + spacers
         public int barWidth = 50;
         private TextArea couresDisplay;
-        public courseGrades[] cgrades;
+        public List<courseGrades> cgrades;
 
-        public generateBarGraph(courseGrades[] studentgrades, int graphheight, TextArea coursedisplay){
+        public generateBarGraph(List<courseGrades> studentgrades, int graphheight, TextArea coursedisplay){
 
             this.cgrades = studentgrades;
             this.graphHeight = graphheight;
-            this.graphWidth = (studentgrades.length * barWidth * 2) + barWidth;
+            this.graphWidth = (studentgrades.size() * barWidth * 2) + barWidth;
             this.couresDisplay = coursedisplay;
 
 
@@ -105,8 +209,11 @@ public class ClientMain extends Application {
             Group bargroup = new Group();
             setBarLayout(bargroup);
 
-            for(int i = 0; i < cgrades.length;i++){
-                makeBar(cgrades[i],bargroup,i);
+            int offset = 0;
+            int tmp = cgrades.size();
+            for (courseGrades course : cgrades){
+                makeBar(course,bargroup,offset);
+                offset++;
             }
 
             return bargroup;
@@ -157,6 +264,8 @@ public class ClientMain extends Application {
             basegroup.getChildren().addAll(yaxis,xaxis);
         }
         public void makeBar(courseGrades course, Group basegroup,int offset){
+
+
             Double completedweight = 0.0;
             Double completedAvg = 0.0;
             Double unfinishedweight = 0.0;
