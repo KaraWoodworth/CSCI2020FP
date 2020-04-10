@@ -4,7 +4,9 @@ import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -14,6 +16,7 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
+import javax.lang.model.element.Element;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,22 +33,22 @@ public class ClientMain extends Application {
 
 
         Group graphgroup = new Group();
-        Rectangle rect = new Rectangle(500.0,500.0);
+        Rectangle rect = new Rectangle(500.0,600.0);
 
         //rect.setFill(Color.BISQUE);
         graphgroup.getChildren().add(rect);
-        courseGrades[] testgrades = new courseGrades[3];
+        courseGrades[] testgrades = new courseGrades[5];
         testgrades[0] = new courseGrades();
-        testgrades[0].gradeList.add(new gradeComponent("Math","test 1",50d,10d,true));
-        testgrades[0].gradeList.add(new gradeComponent("Math","test 2",30d,10d,true));
-        testgrades[0].gradeList.add(new gradeComponent("Math","final",null,80d,false));
+        testgrades[0].gradeList.add(new gradeComponent("Linear Algebra","test 1",50d,10d,true));
+        testgrades[0].gradeList.add(new gradeComponent("Linear Algebra","test 2",30d,10d,true));
+        testgrades[0].gradeList.add(new gradeComponent("Linear Algebra","final",null,80d,false));
 
         testgrades[1] = new courseGrades();
-        testgrades[1].gradeList.add(new gradeComponent("CSCI 2020","test 1",100d,10d,true));
-        testgrades[1].gradeList.add(new gradeComponent("CSCI 2020","test 2",66d,15d,true));
-        testgrades[1].gradeList.add(new gradeComponent("CSCI 2020","assignment 1",80d,25d,true));
-        testgrades[1].gradeList.add(new gradeComponent("CSCI 2020","assignment 2",80d,25d,true));
-        testgrades[1].gradeList.add(new gradeComponent("CSCI 2020","final",null,25d,false));
+        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","test 1",100d,10d,true));
+        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","test 2",66d,15d,true));
+        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","assignment 1",80d,25d,true));
+        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","assignment 2",80d,25d,true));
+        testgrades[1].gradeList.add(new gradeComponent("Calculus 2","final",null,25d,false));
 
         testgrades[2] = new courseGrades();
         testgrades[2].gradeList.add(new gradeComponent("Physics 2","midterm",60d,10d,true));
@@ -54,12 +57,25 @@ public class ClientMain extends Application {
         testgrades[2].gradeList.add(new gradeComponent("Physics 2","labs",null,25d,false));
         testgrades[2].gradeList.add(new gradeComponent("Physics 2","final",null,25d,false));
 
-        generateBarGraph ggraph = new generateBarGraph(testgrades,500,500);
+        testgrades[3] = new courseGrades();
+        testgrades[3].gradeList.add(new gradeComponent("CSCI 2040","midterm",60d,25d,false));
+        testgrades[3].gradeList.add(new gradeComponent("CSCI 2040","midterm 2",60d,25d,false));
+        testgrades[3].gradeList.add(new gradeComponent("CSCI 2040","tutorial grade",60d,50d,false));
+
+        testgrades[4] = new courseGrades();
+        testgrades[4].gradeList.add(new gradeComponent("CSCI 2020","midterm",60d,25d,true));
+        testgrades[4].gradeList.add(new gradeComponent("CSCI 2020","midterm 2",60d,25d,true));
+        testgrades[4].gradeList.add(new gradeComponent("CSCI 2020","tutorial grade",60d,50d,true));
+
+        TextArea courseText = new TextArea();
+        generateBarGraph ggraph = new generateBarGraph(testgrades,500,courseText);
         graphgroup = ggraph.getBarGraph();
         graphgroup.setLayoutY(10);
         graphgroup.setLayoutX(10);
+        HBox mainBox = new HBox();
+        mainBox.getChildren().addAll(graphgroup,courseText);
 
-        Scene mscene = new Scene(graphgroup,800,600);
+        Scene mscene = new Scene(mainBox,800,600);
         primaryStage.setTitle("Client");
         primaryStage.setScene(mscene);
         primaryStage.show();
@@ -72,13 +88,15 @@ public class ClientMain extends Application {
         public int graphHeight = 400; // should do something to ensure bars are normalized
         public int graphWidth = 50; // should be containor size / bars + spacers
         public int barWidth = 50;
+        private TextArea couresDisplay;
         public courseGrades[] cgrades;
 
-        public generateBarGraph(courseGrades[] studentgrades,int graphheight,int graphwidth){
+        public generateBarGraph(courseGrades[] studentgrades, int graphheight, TextArea coursedisplay){
 
             this.cgrades = studentgrades;
             this.graphHeight = graphheight;
-            this.graphWidth = graphwidth;
+            this.graphWidth = (studentgrades.length * barWidth * 2) + barWidth;
+            this.couresDisplay = coursedisplay;
 
 
         }
@@ -143,11 +161,11 @@ public class ClientMain extends Application {
             Double completedAvg = 0.0;
             Double unfinishedweight = 0.0;
             Double expectedweight = 0.0;
-            int barx = barWidth * (offset * 2);
+            int barx = (barWidth * (offset * 2)) + barWidth;
 
             // these lists are necessary for when clicking on a bar we get a granular breakdown
-            List<String> completeditems = new ArrayList<String>();
-            List<String> incompleteItems = new ArrayList<String>();
+            List<gradeComponent> completeditems = new ArrayList<gradeComponent>();
+            List<gradeComponent> incompleteItems = new ArrayList<gradeComponent>();
 
             // process what grades are marked and what are still possible
             // also store list of grade names for display purposes
@@ -155,11 +173,11 @@ public class ClientMain extends Application {
                 if(gc.isCompleted){
                     completedweight += (gc.getRecieved() * gc.getWeight() / 100);
                     completedAvg += gc.getRecieved();
-                    completeditems.add(gc.getName());
+                    completeditems.add(gc);//.getName());
                 }
                 else{
                     unfinishedweight += gc.getWeight();
-                    incompleteItems.add(gc.getName());
+                    incompleteItems.add(gc);//.getName());
                 }
             }
             if(completeditems.size() > 0){
@@ -169,110 +187,132 @@ public class ClientMain extends Application {
                 expectedweight = unfinishedweight * completedAvg / 100;
             }
 
-            // TODO: for now going to assume 100% is 400px
-            Rectangle markedgrade = null;
+            // setting bar segments to be % of bar height
+            GraphTangle markedgrade = null;
 
             if(completedweight > 0){
-                markedgrade = new Rectangle(barWidth,(graphHeight / 100) * Math.round(completedweight));
+                markedgrade = new GraphTangle(barWidth,
+                        (int)((graphHeight / 100) * Math.round(completedweight)),
+                        completeditems,this.couresDisplay);
+                markedgrade.setFancyStyle(barx,
+                        new Color(0.2,0.2,1,0.75),
+                        new Color(.8,.8,1,0.65));
+                markedgrade.setY(graphHeight - markedgrade.getHeight());
 
-                markedgrade.setY(graphHeight - markedgrade.getHeight());// - markedgrade.getHeight());
-                markedgrade.setX(barWidth);
-                markedgrade.setLayoutX(barx);
-                Stop[] stops1 = new Stop[] {
-                        new Stop(0, new Color(0.2,0.2,1,0.75)),
-                        new Stop(1,new Color(.8,.8,1,0.65))
-                };
-                LinearGradient lg1 = new LinearGradient(0,0,0,1,true, CycleMethod.NO_CYCLE,stops1);
-                markedgrade.setFill(Color.RED);
-                markedgrade.setFill(lg1);
-                DropShadow ds1 = new DropShadow();
-                ds1.setOffsetX(1);
-                ds1.setOffsetY(0);
-                ds1.setRadius(20);
-                ds1.setWidth(20);
-                ds1.setHeight(0);
-                markedgrade.setEffect(ds1);
-                markedgrade.setOnMouseEntered( x -> { setMouseHoverScale((Rectangle)x.getSource(),true);});
-                markedgrade.setOnMouseExited(x -> { setMouseHoverScale((Rectangle)x.getSource(),false);});
                 basegroup.getChildren().add(markedgrade);
             }
-            Rectangle expectedgrade = null;
+
+            // this segment is the expected grade based on completed grade
+            GraphTangle expectedgrade = null;
             if(expectedweight > 0)
             {
+                expectedgrade = new GraphTangle(barWidth,
+                        (int)((graphHeight / 100) * Math.round(expectedweight)),
+                        incompleteItems,this.couresDisplay);
 
-                expectedgrade = new Rectangle(barWidth,(graphHeight / 100) * Math.round(expectedweight));
                 if(markedgrade != null) {
                     expectedgrade.setY(graphHeight - markedgrade.getHeight() - expectedgrade.getHeight());
                 } else {
                     expectedgrade.setY(graphHeight- expectedgrade.getHeight());
                 }
-                expectedgrade.setX(barWidth);
-                expectedgrade.setLayoutX(barx);
-                Stop[] stops2 = new Stop[] {
-                        new Stop(0, new Color(0.1,0.8,0.1,0.6)),
-                        new Stop(1,new Color(0.9,0.9,0.9,0.4))
-                };
-                LinearGradient lg2 = new LinearGradient(0,0,0,1,true, CycleMethod.NO_CYCLE,stops2);
-                expectedgrade.setFill(lg2);
-                DropShadow ds2 = new DropShadow();
-                ds2.setOffsetX(1);
-                ds2.setOffsetY(0);
-                ds2.setRadius(20);
-                ds2.setWidth(20);
-                ds2.setHeight(0);
-                expectedgrade.setEffect(ds2);
+
+                expectedgrade.setFancyStyle(barx,
+                        new Color(0.1,0.8,0.1,0.6),
+                        new Color(0.9,0.9,0.9,0.4));
 
                 basegroup.getChildren().add(expectedgrade);
             }
-            Rectangle unmarkedgrade;
-            Double remainingheight = unfinishedweight - expectedweight;
-            if(remainingheight > 0)
+            // this segment represents the remaining achievable grade minus expected grade
+            GraphTangle unmarkedgrade;
+            Double remaainingheight = unfinishedweight - expectedweight;
+            if(remaainingheight > 0)
             {
-
-                unmarkedgrade = new Rectangle(barWidth,(graphHeight / 100) * Math.round(remainingheight));
-                if(expectedweight != null) {
+                unmarkedgrade = new GraphTangle(barWidth,
+                        (int)((graphHeight / 100) * Math.round(remaainingheight)),
+                        incompleteItems,this.couresDisplay);
+                // if there is no more available grade, then student has already achieved max grade
+                if(expectedgrade != null) {
                     unmarkedgrade.setY(expectedgrade.getY() - unmarkedgrade.getHeight());
                 } else {
                     unmarkedgrade.setY(graphHeight- unmarkedgrade.getHeight());
                 }
-                unmarkedgrade.setX(barWidth);
-                unmarkedgrade.setLayoutX(barx);
-                Stop[] stops2 = new Stop[] {
-                        new Stop(0, new Color(0.8,0.8,0.8,0.2)),
-                        new Stop(1,new Color(0.9,0.9,0.9,0.1))
-                };
-                LinearGradient lg2 = new LinearGradient(0,0,0,1,true, CycleMethod.NO_CYCLE,stops2);
-                unmarkedgrade.setFill(lg2);
-                DropShadow ds2 = new DropShadow();
-                ds2.setOffsetX(1);
-                ds2.setOffsetY(0);
-                ds2.setRadius(20);
-                ds2.setWidth(20);
-                ds2.setHeight(0);
-                unmarkedgrade.setEffect(ds2);
+
+                unmarkedgrade.setFancyStyle(barx,
+                        new Color(0.8,0.8,0.8,0.2),
+                        new Color(0.9,0.9,0.9,0.1));
 
                 basegroup.getChildren().add(unmarkedgrade);
             }
-            //return basegroup;
-            // TODO: calculate projected grade
-
         }
-        void setMouseHoverScale(Rectangle rect,boolean isOn){
-            if(isOn == true){
-                rect.setWidth(rect.getWidth() + 20);
-            }else {
-                rect.setWidth(rect.getWidth() - 20);
+    }
+
+    public class GraphTangle extends Rectangle{
+        private List<gradeComponent>segmentItems;
+        private TextArea textRef;
+
+        public GraphTangle(int rwidth,int rheight,List<gradeComponent> segmentitems,TextArea textref){
+            this.setWidth(rwidth);
+            this.setHeight(rheight);
+            this.segmentItems = segmentitems;
+            this.textRef = textref;
+
+            // bar segment events
+            this.setOnMouseEntered( x -> { setMouseHoverScale((Rectangle)x.getSource(),true);});
+            this.setOnMouseExited(x -> { setMouseHoverScale((Rectangle)x.getSource(),false);});
+            this.setOnMouseClicked(x-> {setMouseClick();});
+        }
+        public List<gradeComponent> getSegmentItems(){
+            return this.segmentItems;
+        }
+        public void setSegmentItems(List<gradeComponent>items){
+            this.segmentItems = items;
+        }
+        private void setMouseClick(){
+            textRef.setText("");
+            if(segmentItems.size() > 0){
+                String txt = "";
+                for (gradeComponent x : this.segmentItems) {
+                    if(txt == ""){
+                        txt += "Course name: " + x.course_name + "\nGrade name: Grade Recieved,\t Grade Weight\n";
+                    }
+                        txt += x.grade_name + ": " + x.grade_recieved + ",\t" + x.grade_weight + "\n";
+
+                }
+
+                textRef.setText(txt);
             }
         }
 
-    }
+        private void setMouseHoverScale(Rectangle rect,boolean isOn){
+            if(isOn == true){
+                rect.setWidth(rect.getWidth() + 20);
+                rect.setX(rect.getX() - 10);
+            }else {
+                rect.setWidth(rect.getWidth() - 20);
+                rect.setX(rect.getX() + 10);
+            }
+        }
+        // rectangle style settings applied here
+        public void setFancyStyle(int layoutx,Color colorstart,Color colorend){
+            this.setLayoutX(layoutx);
+            Stop[] stops1 = new Stop[] {
+                    new Stop(0, colorstart),
+                    new Stop(1,colorend)
+            };
+            LinearGradient lg1 = new LinearGradient(0,0,0,1,true, CycleMethod.NO_CYCLE,stops1);
 
-
-    public class GradeGraph{
-        public class gradeRectangle extends Rectangle{
-            List<String> namedComponents = new ArrayList<String>();
+            this.setFill(lg1);
+            DropShadow ds1 = new DropShadow();
+            ds1.setOffsetX(1);
+            ds1.setOffsetY(0);
+            ds1.setRadius(20);
+            ds1.setWidth(20);
+            ds1.setHeight(0);
+            this.setEffect(ds1);
         }
     }
+
+
 
     public class courseGrades implements Iterable<gradeComponent>{
         private final List<gradeComponent> gradeList = new ArrayList<gradeComponent>();
