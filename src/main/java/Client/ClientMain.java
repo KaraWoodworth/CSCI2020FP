@@ -8,7 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
+
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
@@ -16,12 +16,8 @@ import javafx.scene.paint.Stop;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
-
-import javax.lang.model.element.Element;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -39,106 +35,59 @@ public class ClientMain extends Application {
     public HBox mainBox;
     @Override
     public void start(Stage primaryStage) {
-        Pane mpane = new Pane();
 
-        courseText = new TextArea();
-        graphgroup = new Group();
-        Rectangle rect = new Rectangle(500.0,600.0);
+        courseText = new TextArea(); // will be the area to display bar items
+        graphgroup = new Group(); // will be the area the bar graph exists in
 
-        //rect.setFill(Color.BISQUE);
-        //graphgroup.getChildren().add(rect);
-
-        List<courseGrades> testgrades = new ArrayList<courseGrades>();
-        courseGrades course1 = new courseGrades();
-        course1.gradeList.add(new gradeComponent("Linear Algebra","test 1",50d,10d,true));
-        course1.gradeList.add(new gradeComponent("Linear Algebra","test 2",30d,10d,true));
-        course1.gradeList.add(new gradeComponent("Linear Algebra","final",null,80d,false));
-        courseGrades course2 = new courseGrades();
-        course2.gradeList.add(new gradeComponent("Calculus 2","test 1",100d,10d,true));
-        course2.gradeList.add(new gradeComponent("Calculus 2","test 2",66d,15d,true));
-        course2.gradeList.add(new gradeComponent("Calculus 2","Assignment 1",80d,25d,true));
-        course2.gradeList.add(new gradeComponent("Calculus 2","Assignment 2",null,25d,false));
-        course2.gradeList.add(new gradeComponent("Calculus 2","final",null,25d,false));
-        courseGrades course3 = new courseGrades();
-        course3.gradeList.add(new gradeComponent("Physics 2","midterm 1",60d,10d,true));
-        course3.gradeList.add(new gradeComponent("Physics 2","midterm 2",60d,15d,true));
-        course3.gradeList.add(new gradeComponent("Physics 2","tutorial",60d,25d,true));
-        course3.gradeList.add(new gradeComponent("Physics 2","labs",null,25d,false));
-        course3.gradeList.add(new gradeComponent("Physics 2","final",null,25d,false));
-        courseGrades course4 = new courseGrades();
-        course4.gradeList.add(new gradeComponent("CSCI 2040","midterm",null,25d,false));
-        course4.gradeList.add(new gradeComponent("CSCI 2040","final exam",null,50d,false));
-        course4.gradeList.add(new gradeComponent("CSCI 2040","tutorial grade",null,25d,false));
-        courseGrades course5 = new courseGrades();
-        course5.gradeList.add(new gradeComponent("CSCI 2020","midterm",60d,25d,true));
-        course5.gradeList.add(new gradeComponent("CSCI 2020","final exam",60d,50d,true));
-        course5.gradeList.add(new gradeComponent("CSCI 2020","Assignments",60d,25d,true));
-
-
-        testgrades.add(course1);
-        testgrades.add(course2);
-        testgrades.add(course3);
-        testgrades.add(course4);
-        testgrades.add(course5);
-
-        generateBarGraph ggraph = new generateBarGraph(testgrades,500,courseText);
-
-        graphgroup = ggraph.getBarGraph();
         graphgroup.setLayoutY(10);
         graphgroup.setLayoutX(10);
         mainBox = new HBox();
-        mainBox.getChildren().addAll(graphgroup,courseText);
 
         Scene mscene = new Scene(mainBox,800,600);
-        primaryStage.setTitle("Client");
+        primaryStage.setTitle("Client: Course grade view");
         primaryStage.setScene(mscene);
         primaryStage.show();
-        //getServerData(8000);
+
+        //load data from server and populate graph
+        getServerData(8000);
 
     }
 
     public void getServerData(int port){
-        new Thread( () -> {
+
+        Platform.runLater(() -> {
             try {
                 Socket socket = new Socket("localhost",port);
 
                 DataInputStream getdata = new DataInputStream(socket.getInputStream());
 
-                String rawdata = getdata.readUTF();
+                String rawdata = getdata.readUTF(); // recieves csv data from server
+                List<courseGrades> grades = getGraphList(rawdata); // converts csv data to a list
 
-                Platform.runLater(new updateUI(rawdata));
+                //below is creating a new graph object with the list generated from csv
+                generateBarGraph ggraph = new generateBarGraph(grades, 500, courseText);
+
+                // getting graph layout information and assigning group to it
+                graphgroup = ggraph.getBarGraph();
+                mainBox.getChildren().addAll(graphgroup, courseText); // add graph and text area to main hbox
+                courseText.setText("select a bar to view data"); // default view to help with knowing what to do
+
 
             } catch(IOException e){
                 System.err.println(e);
             }
-        }).start();
+        });
     }
-    class updateUI implements Runnable{
-        private String rawData;
-        public updateUI(String rawdata){this.rawData = rawdata;}
-        public void run(){
-            try {
-                List<courseGrades> grades = getGraphList(this.rawData);
-                generateBarGraph ggraph = new generateBarGraph(grades, 500, courseText);
 
-                graphgroup = ggraph.getBarGraph();
-                //mainBox.getChildren().addAll(graphgroup, courseText);
-                courseText.setText("select a bar to view data");
-            }catch(Exception e){
-                System.out.println(e);
-
-            }
-        }
-
-    }
+    // takes csv data and coverts it into list that graph class can use
     public List<courseGrades> getGraphList(String rawdata){
+        List<courseGrades> allgrades = new ArrayList<courseGrades>();
         if(rawdata.length() > 0) {
             String[] rawlines = rawdata.split("\n");
             String currentclass = "";
-            List<courseGrades> allgrades = new ArrayList<courseGrades>();
+
             courseGrades coursegrade = null;
             // get individusal lines
-            //System.out.println("There is this many lines" );
             for (String line : rawlines) {
                 // get current lines fields
                 String[] Fields = line.split(",");
@@ -155,35 +104,25 @@ public class ClientMain extends Application {
                     }
                     Boolean currentboolean = false;
                     if(Fields[4].endsWith("true")){
-                        System.out.println(Fields[1] + " flagged true reads " + Fields[4]);
                         currentboolean = true;
                     }else {
-                        System.out.println(Fields[1] + " flagged false reads " + Fields[4]);
                     }
                     Double field2 = null;
 
                     if(Fields[2].length() > 0) {
-
                         field2 = Double.parseDouble(Fields[2]);
                     }
 
                     Double field3 = Double.parseDouble(Fields[3]);
-                    System.out.println("Final bool before adding is " + currentboolean.toString());
-
                     coursegrade.gradeList.add(new gradeComponent(Fields[0],Fields[1],field2,field3,currentboolean));
-
                 }
                 else{
-                    System.out.println("Error in reading line" + line + "\n" +
-                            "too few fields");
+                    System.out.println("Error in reading line" + line + "\n" + "too few fields");
                 }
-
             }
             allgrades.add(coursegrade);
-            System.out.println("Parsed grades: " + allgrades.size());
-            return allgrades;
         }
-        return null;
+        return allgrades;
     }
 
     // this is for creating all bars
@@ -355,6 +294,7 @@ public class ClientMain extends Application {
         }
     }
 
+    // custom shape object containing style and event information for bar component
     public class GraphTangle extends Rectangle{
         private List<gradeComponent>segmentItems;
         private TextArea textRef;
@@ -422,7 +362,7 @@ public class ClientMain extends Application {
     }
 
 
-
+// implementing iterable features for a collection of gradeComponents
     public class courseGrades implements Iterable<gradeComponent>{
         private final List<gradeComponent> gradeList = new ArrayList<gradeComponent>();
         @Override
